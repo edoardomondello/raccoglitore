@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="Raccoglitore">
+<meta name="theme-color" content="#003a70">
+<title>Collezione Pokémon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful, proud, fast on a phone — a trainer's binder, not a spreadsheet.
+   IDEA: an electric-yellow binder: thunderbolt pattern, holo-foil shimmer on every card.
+   PICTURE: splash = a fan of the five most valuable cards; app = value line + binder pages.
+   COLOUR and TYPE: electric yellow ground, ink #1b1630, fire red accent, sky blue support; Bungee + Nunito.
+   LAYOUT: splash first; then hero value, chart, Pikachu set 01→30, the rest of the binder. */
+:root{color-scheme:light dark;--y:#ffcb05;--ys:#c7a008;--blue:#3d7dca;--navy:#003a70;--bg:light-dark(#eef4fc,#071a33);--ink:light-dark(#0c2340,#eef4ff);--mut:light-dark(#4f6584,#9fb4d3);--line:light-dark(#d3e0f2,#173a66);--panel:light-dark(#fff,#0d2747);--red:#cc0000;--sky:#3d7dca;--up:light-dark(#11804a,#47d68b);--down:light-dark(#cc0000,#ff6a5c);--hero:#003a70;--heroink:#fff}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{width:100%;max-width:100%;overflow-x:hidden;overscroll-behavior-x:none}body{touch-action:pan-y pinch-zoom;position:relative}
+img,svg,table,dialog{max-width:100%}.wrap,header.hero,main,section{max-width:100%;overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Nunito,system-ui,sans-serif;font-weight:600;overflow-x:clip}
+.bolts{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cpath d='M38 8h22l-12 26h16L30 76l9-30H24z' fill='%23000' opacity='.06'/%3E%3Cpath d='M98 64h14l-8 17h10L88 112l6-21h-9z' fill='%23000' opacity='.05'/%3E%3C/svg%3E")}
+.wrap{max-width:1100px;margin:0 auto;padding:0 max(4vw,16px)}
+h1,h2,.bungee{font-family:Bungee,Nunito,sans-serif;font-weight:400;letter-spacing:.01em}
+/* splash */
+#splash{position:fixed;inset:0;z-index:50;background:#003a70;color:#fff;display:grid;place-items:end center;text-align:center;padding:calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));overflow:hidden;transition:opacity .45s,transform .45s}
+#splash.gone{opacity:0;transform:scale(1.04);pointer-events:none}
+#splash .wall{position:absolute;inset:-40%;display:grid;grid-template-columns:repeat(9,1fr);gap:14px;transform:rotate(-14deg);opacity:.33;animation:drift 40s linear infinite alternate}#splash .wall img{width:100%;aspect-ratio:63/88;object-fit:cover;border-radius:8px}#splash .bgimg{position:absolute;inset:0;background:#003a70;display:grid;grid-template-columns:repeat(6,1fr);gap:10px;inset:-25% -40%;transform-origin:center;rotate:-12deg;animation:zoom 18s ease-in-out infinite alternate}@keyframes zoom{to{transform:scale(1.07)}}#splash .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,30,60,.55) 58%,rgba(0,30,60,.92) 100%)}@keyframes drift{to{transform:rotate(-14deg) translate(-6%,-8%)}}
+#splash .in{position:relative;display:grid;gap:14px;justify-items:center;max-width:520px;width:100%}
+.fan{position:relative;width:min(340px,86vw);height:min(250px,58vw);margin:6px auto 4px}
+.fan img{position:absolute;left:50%;bottom:0;width:38%;aspect-ratio:63/88;object-fit:cover;border-radius:7%;box-shadow:0 14px 30px rgba(0,0,0,.5);border:3px solid #ffcb05;transform-origin:50% 120%;background:#fff}
+#splash h1{margin:0;font-size:clamp(34px,10vw,56px);line-height:1;color:#ffcb05;-webkit-text-stroke:2px #3d7dca;paint-order:stroke fill;text-shadow:4px 4px 0 #c7a008,6px 7px 0 #001f3d}
+#splash p{margin:0;font-size:17px;font-weight:800}
+.chipv{background:#ffcb05;color:#003a70;border-radius:99px;padding:8px 18px;font-size:20px;font-weight:900;white-space:nowrap}
+.go{min-height:56px;padding:0 34px;border-radius:99px;border:0;background:var(--red);color:#fff;font:400 20px Bungee,sans-serif;box-shadow:0 6px 0 #7a0000;border:3px solid #fff;cursor:pointer}
+.go:active{transform:translateY(4px);box-shadow:0 2px 0 #7a0000}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* hero */
+header.hero{background:var(--hero);color:var(--heroink);padding:calc(18px + env(safe-area-inset-top)) 0 26px;border-bottom:8px solid var(--y);position:relative}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.logo{font-family:Bungee,sans-serif;font-size:18px;display:flex;align-items:center;gap:8px}
+.logo svg{width:28px;height:28px}
+.total{font-family:Bungee,sans-serif;font-size:clamp(34px,11vw,64px);overflow:hidden;text-overflow:ellipsis;line-height:1.05;margin-top:12px;white-space:nowrap;color:#ffcb05;text-shadow:3px 3px 0 #3d7dca}
+.sub{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:15px}
+.sub b{font-weight:900}
+.chg{font-weight:900;white-space:nowrap}.chg.up{color:var(--up)}.chg.down{color:var(--down)}
+.hero .chg.up{color:#5be39a}.hero .chg.down{color:#ff8a80}
+.fig{position:relative;height:190px;margin-top:12px;background:rgba(255,255,255,.08);border:2px solid rgba(255,203,5,.35);border-radius:16px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+.fig.sm{height:170px;background:var(--bg)}
+.empty-chart{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-size:14px;padding:0 20px}
+.strip{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--panel);color:var(--ink);font-size:14px;margin-top:12px;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.strip.warn{background:#ffe1dc;color:#8d0f18}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--up);flex:none;box-shadow:0 0 0 4px rgba(17,128,74,.18)}.strip.warn .dot{background:var(--red)}
+/* sections */
+section.pg{padding:26px 0 6px}
+.sh{display:flex;align-items:end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sh h2{margin:0;font-size:clamp(22px,6vw,30px);line-height:1.1;color:light-dark(#003a70,#ffcb05);text-shadow:2px 2px 0 light-dark(#ffcb05,#3d7dca)}
+.sh .note{margin:0}
+.bar{height:12px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#ffcb05,#c7a008);border-radius:99px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+input,select,button,textarea{font:inherit;font-size:16px;color:inherit}
+input,select{min-height:44px;padding:8px 12px;border:2px solid var(--line);border-radius:12px;background:var(--panel);width:100%;font-weight:700}
+.tools input{flex:1 1 160px}.tools select{flex:0 1 150px;width:auto}
+button{min-height:44px;padding:0 16px;border-radius:12px;border:2px solid var(--line);background:var(--panel);cursor:pointer;font-weight:900}
+button.pri{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 4px 0 #7a0000}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:14px;margin-top:14px}
+.slab{position:relative;border:0;border-radius:18px;background:var(--panel);padding:8px 8px 10px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:6px;font-weight:600;box-shadow:0 4px 0 var(--line),0 8px 18px rgba(0,58,112,.10);border-top:5px solid var(--y)}
+.pic{position:relative;aspect-ratio:63/88;border-radius:9px;overflow:hidden;background:var(--line)}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.pic::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.45) 45%,rgba(120,220,255,.25) 52%,transparent 65%);background-size:250% 250%;background-position:100% 0;mix-blend-mode:screen;transition:background-position .6s}
+.slab:hover .pic::after,.slab:focus-visible .pic::after{background-position:0 100%}
+.nm{font-weight:900;font-size:15px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st{font-size:12px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:13px}
+.pr .v{font-family:Bungee,sans-serif;font-size:18px;white-space:nowrap;color:light-dark(#003a70,#ffcb05)}
+.pr .k{color:var(--mut)}
+.qty{position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font:400 13px Bungee,sans-serif;border-radius:99px;padding:2px 9px;z-index:1;box-shadow:0 2px 0 #7a0000}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:#fff1b8;color:#6d4b00;white-space:nowrap;font-weight:800}
+.tag.err{background:#ffe1dc;color:#8d0f18}
+/* pikachu binder */
+.pk{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:14px}
+.slot{position:relative;border-radius:12px;padding:5px;background:var(--panel);box-shadow:0 3px 0 var(--line);text-align:center;font-size:12px;font-weight:800;cursor:pointer;border:0;display:block;color:inherit;text-decoration:none}
+.slot .pic{border-radius:7px}
+.slot .n{font-family:Bungee,sans-serif;font-size:13px;margin-top:4px;display:block;color:light-dark(#003a70,#ffcb05)}
+.slot.miss{background:transparent;box-shadow:none;border:3px dashed var(--red);color:var(--red)}
+.slot.miss .pic{background:repeating-linear-gradient(45deg,transparent 0 8px,light-dark(rgba(232,50,28,.07),rgba(232,50,28,.14)) 8px 16px);display:grid;place-items:center}
+.slot.miss .pic span{font-size:12px;line-height:1.3}
+/* dialogs */
+dialog{border:0;border-radius:22px;padding:0;width:min(560px,100vw - 20px);max-height:92vh;background:var(--panel);color:var(--ink);border-top:8px solid var(--y)}
+dialog::backdrop{background:rgba(0,30,60,.65)}
+.dlg{padding:18px;display:grid;gap:12px}
+.dlg h2{margin:0;font-size:24px;line-height:1.1;color:light-dark(#003a70,#ffcb05)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:grid;gap:4px;font-size:13px;color:var(--mut);font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:15px}td{padding:8px 0;border-bottom:2px dotted var(--line)}td:last-child{text-align:right;font-weight:900;white-space:nowrap}
+.det{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start}
+.det .pic{width:120px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mut)}.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.note{font-size:13px;color:var(--mut)}
+a{color:var(--sky)}
+footer{padding:20px 0 calc(30px + env(safe-area-inset-bottom))}
+@media(max-width:420px){.grid{grid-template-columns:1fr 1fr;gap:10px}.pr .v{font-size:16px}.pk{grid-template-columns:repeat(3,1fr)}}
+@media(prefers-reduced-motion:reduce){#splash .bgimg{animation:none}#splash,.pic::after{transition:none}}
+#splash .bgimg img{width:100%;aspect-ratio:63/88;object-fit:cover;border-radius:8px;opacity:.75}
+</style>
+</head>
+<body class="bolts">
+<div id="splash">
+  <div class="bgimg" aria-hidden="true"></div><div class="shade"></div>
+  <div class="in">
+    <h1>La nostra<br>collezione</h1>
+    <p id="spl">Carte Pokémon · valori Cardmarket</p>
+    <div class="chipv" id="splv">Caricamento…</div>
+    <button class="go" id="go">Apri il raccoglitore</button>
+  </div>
+</div>
+
+<header class="hero bolts">
+  <div class="wrap">
+    <div class="top"><div class="logo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M13 2h10l-6 11h7L10 30l4-12H8z" fill="#ffcb05" stroke="#3d7dca" stroke-width="2" stroke-linejoin="round"/></svg>Il raccoglitore</div><span></span></div>
+    <div class="total" id="total">—</div>
+    <div class="sub"><span id="chg" class="chg"></span><span>Carte: <b id="count">0</b></span><span>Minimo: <b id="tmin">—</b></span><span>PSA 10: <b id="tpsa">—</b></span></div>
+    <div class="fig" id="mainfig"><svg id="mainsvg" role="img" aria-label="Valore della collezione nel tempo"></svg></div>
+    <div class="strip" id="strip"><span class="dot"></span><span id="striptxt">Caricamento…</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="pg">
+    <div class="sh"><h2>Le altre carte</h2><span class="note" id="othcount"></span></div>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Cerca una carta" aria-label="Cerca">
+      <select id="sort" aria-label="Ordina"><option value="val">Valore ↓</option><option value="chg">Variazione</option><option value="name">Nome</option><option value="new">Ultime aggiunte</option></select>
+      <select id="own" aria-label="Di chi"><option value="">Tutti</option></select>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+  <section class="pg" id="setbox" hidden>
+    <div class="sh"><h2 id="settitle">Set dei 30 Pikachu</h2><span class="note" id="setsub"></span></div>
+    <div class="bar"><i id="setbar" style="width:0"></i></div>
+    <div class="pk" id="pk"></div>
+  </section>
+  <footer><p class="note" id="foot"></p></footer>
+</main>
+
+<dialog id="dadd"><form class="dlg" id="fadd">
+  <h2>Nuova carta</h2>
+  <label>Foto della carta<input type="file" id="fphoto" accept="image/*"></label>
+  <label>Nome *<input id="fname" required placeholder="Es. Pikachu ex"></label>
+  <div class="row2"><label>Numero<input id="fnum" placeholder="Es. 149/128"></label><label>Espansione<input id="fset" placeholder="Es. 30° Anniversario"></label></div>
+  <label>Lingua<select id="flang"><option>Italiano</option><option>Inglese</option><option>Giapponese</option><option>Cinese</option><option>Altro</option></select></label>
+  <label>Di chi è<input id="fown" list="owners" placeholder="Es. Augusto"><datalist id="owners"></datalist></label>
+  <label>Link Cardmarket (facoltativo, rende la ricerca sicura)<input id="furl" type="url" placeholder="https://www.cardmarket.com/it/Pokemon/Products/Singles/…"></label>
+  <p class="note">I prezzi arrivano da Cardmarket con l'aggiornamento automatico (di solito entro un'ora).</p>
+  <div class="acts"><button type="button" id="fcancel">Annulla</button><button class="pri" id="fsave">Salva</button></div>
+</form></dialog>
+
+<dialog id="ddet"><div class="dlg">
+  <div class="det"><div class="pic" id="dpic"></div><div><h2 id="dname"></h2><div class="note" id="dset"></div><div id="dstatus" style="margin-top:6px"></div></div></div>
+  <table><tbody>
+    <tr><td>Tendenza di prezzo</td><td id="dtrend"></td></tr>
+    <tr><td>Prezzo minimo (Da)</td><td id="dmin"></td></tr>
+    <tr><td>Media 30 giorni</td><td id="davg"></td></tr>
+    <tr><td>Variazione 30 giorni</td><td id="d30"></td></tr>
+    <tr><td>PSA 10 (venduti, PriceCharting)</td><td id="dpsa"></td></tr>
+    <tr><td>Quantità</td><td id="dqty"></td></tr>
+  </tbody></table>
+  <div class="legend"><span><i style="background:var(--red)"></i>Prezzo medio di vendita giornaliero (Cardmarket)</span><span><i style="background:var(--sky)"></i>Tendenza</span></div>
+  <div class="fig sm" id="dfig"><svg id="dsvg" role="img" aria-label="Prezzo della carta nel tempo"></svg></div>
+  <p class="note" id="dupd"></p>
+  <div class="acts"><a id="dlink" target="_blank" rel="noopener"><button type="button">Cardmarket</button></a><button class="pri" id="dclose">Chiudi</button></div>
+  <p class="note" id="dconfirm" hidden></p>
+</div></dialog>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const eur=v=>v==null||isNaN(v)?'—':v.toLocaleString('it-IT',{style:'currency',currency:'EUR'});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let cards=[],sync=null,setDoc=null,db=null,openId=null,FH={};
+const salesOf=c=>{const m=new Map();for(const p of [...(Array.isArray(FH[c.id])?FH[c.id]:[]),...(Array.isArray(c.sales)?c.sales:[])])if(p&&typeof p.d==='string'&&isFinite(p.v))m.set(p.d,+p.v);return [...m].sort((a,b)=>a[0]<b[0]?-1:1).map(([d,v])=>({d,v}))};
+const daysAgo=n=>{const t=new Date(Date.now()-n*864e5);return t.toISOString().slice(0,10)};
+const chg30=c=>{const s=salesOf(c).filter(p=>p.d>=daysAgo(31));return s.length>1&&s[0].v?pct(s.at(-1).v,s[0].v):null};
+const okImg=u=>/^data:image\//.test(u||'')||/^(thumbs|cm)\/[\w-]+\.jpg$/.test(u||'')||/^https:\/\/product-images\.s3\.cardmarket\.com\/[\w.\/-]+\.jpg$/.test(u||'');
+const qty=c=>Math.max(1,+c.qty||1);
+const last=c=>{const h=c.hist||[];return h.length?h[h.length-1]:null};
+const prev=c=>{const h=c.hist||[];return h.length>1?h[h.length-2]:null};
+const val=c=>(c.prices?.trend??0)*qty(c);
+const isPk=c=>/^pk\d{3}$/.test(c.id);
+const fmtD=d=>d?new Date(d+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'}):'';
+const pct=(a,b)=>b?((a-b)/b*100):null;
+const imgTag=c=>okImg(c.img)?`<img alt="" src="${esc(c.img)}" loading="lazy">`:'';
+
+// splash
+let splashGone=false;try{splashGone=sessionStorage.getItem('pk_splash')==='1'}catch(e){}
+const hideSplash=()=>{$('splash').classList.add('gone');try{sessionStorage.setItem('pk_splash','1')}catch(e){}setTimeout(()=>$('splash').hidden=true,500)};
+if(splashGone)$('splash').hidden=true;
+$('go').onclick=hideSplash;
+let fanDone=false;
+function renderSplash(tot){
+  $('splv').textContent=eur(tot)+' · '+cards.reduce((s,c)=>s+qty(c),0)+' carte';
+  const bg=document.querySelector('#splash .bgimg');if(bg&&!bg.childElementCount&&cards.length){const all=cards.filter(c=>okImg(c.img));let h='';for(let i=0;i<60;i++){const c=all[(i*7)%all.length];h+=`<img alt="" src="${esc(c.img)}" loading="lazy">`}bg.innerHTML=h}
+  return;fanDone=true;
+  const top=[...cards].filter(c=>okImg(c.img)).sort((a,b)=>(b.prices?.trend||0)-(a.prices?.trend||0)).slice(0,5);
+  const ang=[-26,-13,0,13,26];
+  const all=cards.filter(c=>okImg(c.img));const w=[];for(let i=0;i<81;i++)w.push(all[i%all.length]);$('wall').innerHTML=w.map(c=>`<img alt="" src="${esc(c.img)}" loading="lazy">`).join('');
+  $('fan').innerHTML=top.map((c,i)=>`<img alt="" src="${esc(c.img)}" style="transform:translateX(-50%) rotate(${ang[i]}deg);z-index:${i===2?5:5-Math.abs(i-2)}">`).join('');
+}
+
+function series(){
+  const from=daysAgo(31),S=cards.map(c=>[c,salesOf(c)]);
+  const dates=[...new Set(S.flatMap(([c,s])=>s.map(p=>p.d)))].filter(d=>d>=from).sort();
+  return dates.map(d=>{let t=0;for(const [c,s] of S){let v=null;for(const p of s){if(p.d<=d)v=p.v;else break}if(v==null)v=s.length?s[0].v:(c.prices?.trend??0);t+=v*qty(c)}return{d,v:t}});
+}
+function chart(svg,lines){
+  const draw=()=>{
+    const W=svg.clientWidth,H=svg.clientHeight;if(!W)return;
+    const pts=lines.flatMap(l=>l.pts.filter(p=>p.v!=null));
+    const box=svg.parentElement;box.querySelector('.empty-chart')?.remove();
+    const dates=[...new Set(pts.map(p=>p.d))].sort();
+    if(dates.length<2){svg.innerHTML='';const e=document.createElement('div');e.className='empty-chart';e.textContent=dates.length?'Primo prezzo registrato il '+fmtD(dates[0])+'. Il grafico si riempie con un punto al giorno.':'Ancora nessun prezzo registrato.';box.appendChild(e);return}
+    const vs=pts.map(p=>p.v);let lo=Math.min(...vs),hi=Math.max(...vs);if(hi-lo<1e-9){hi+=1;lo=Math.max(0,lo-1)}const pad=(hi-lo)*.12;lo=Math.max(0,lo-pad);hi+=pad;
+    const L=10,R=W<520?50:60,T=12,B=24;
+    const x=d=>L+(W-L-R)*dates.indexOf(d)/(dates.length-1),y=v=>T+(H-T-B)*(1-(v-lo)/(hi-lo));
+    let s='';
+    for(let i=0;i<=3;i++){const v=lo+(hi-lo)*i/3,yy=y(v);s+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="currentColor" opacity=".15"/><text x="${W-R+6}" y="${yy+4}" font-size="11" fill="currentColor" opacity=".7">${esc(v>=100?Math.round(v)+' €':v.toFixed(v<10?2:1)+' €')}</text>`}
+    s+=`<text x="${L}" y="${H-6}" font-size="11" fill="currentColor" opacity=".7">${esc(fmtD(dates[0]))}</text><text x="${W-R}" y="${H-6}" font-size="11" fill="currentColor" opacity=".7" text-anchor="end">${esc(fmtD(dates.at(-1)))}</text>`;
+    for(const l of lines){const p=l.pts.filter(p=>p.v!=null&&dates.includes(p.d));if(!p.length)continue;
+      const d=p.map((q,i)=>(i?'L':'M')+x(q.d).toFixed(1)+' '+y(q.v).toFixed(1)).join(' ');
+      if(l.fill)s+=`<path d="${d} L${x(p.at(-1).d)} ${H-B} L${x(p[0].d)} ${H-B}Z" fill="${l.color}" opacity=".16"/>`;
+      s+=`<path d="${d}" fill="none" stroke="${l.color}" stroke-width="${l.w||2}" stroke-linejoin="round" stroke-linecap="round"/>`;
+      const e=p.at(-1);s+=`<circle cx="${x(e.d)}" cy="${y(e.v)}" r="4" fill="${l.color}" stroke="#fff" stroke-width="2"/>`}
+    svg.innerHTML=s};
+  draw();if(!svg._ro){svg._ro=new ResizeObserver(()=>svg._draw&&svg._draw());svg._ro.observe(svg)}svg._draw=draw;
+}
+
+function renderSet(){
+  const b=$('setbox');const st=setDoc;if(!st||!Array.isArray(st.items)){b.hidden=true;return}b.hidden=false;
+  const it=[...st.items].sort((a,b)=>a.i-b.i),own=it.filter(x=>x.own),miss=it.filter(x=>!x.own);
+  $('settitle').textContent='Set dei 30 Pikachu · '+own.length+'/'+it.length;
+  $('setbar').style.width=(own.length/it.length*100)+'%';
+  $('setsub').textContent=miss.length?'Mancano '+miss.length+' carte, circa '+eur(miss.reduce((s,x)=>s+(+x.trend||0),0))+' su Cardmarket':'Set completo!';
+  $('pk').innerHTML=it.map(x=>{const n=String(x.i).padStart(2,'0')+'/30';
+    const c=cards.find(k=>k.id==='pk'+x.n);
+    if(x.own&&c)return `<button class="slot" data-id="${esc(c.id)}"><div class="pic">${imgTag(c)}</div><span class="n">${esc(n)}</span>${esc(eur(c.prices?.trend))}</button>`;
+    if(x.own)return `<div class="slot"><div class="pic"></div><span class="n">${esc(n)}</span></div>`;
+    const u=/^https:\/\/www\.cardmarket\.com\//.test(x.url||'')?x.url:'';
+    return `<a class="slot miss" ${u?`href="${esc(u)}" target="_blank" rel="noopener"`:''}><div class="pic"><span>Manca<br>${esc(eur(+x.trend))}</span></div><span class="n">${esc(n)}</span>${esc(x.n)}/128</a>`}).join('');
+}
+
+function render(){
+  const tot=cards.reduce((s,c)=>s+val(c),0);
+  renderSplash(tot);
+  $('total').textContent=eur(tot);
+  $('count').textContent=cards.reduce((s,c)=>s+qty(c),0);
+  $('tmin').textContent=eur(cards.reduce((s,c)=>s+(c.prices?.min??0)*qty(c),0));
+  const psa=cards.filter(c=>c.prices?.psa10!=null);
+  $('tpsa').textContent=psa.length?eur(psa.reduce((s,c)=>s+c.prices.psa10*qty(c),0))+` (${psa.length} carte)`:'nessuna quotazione';
+  const ser=series();const chg=$('chg');
+  if(ser.length>1){const a=ser.at(-1).v,b=ser[0].v,p=pct(a,b);chg.className='chg '+(a>=b?'up':'down');chg.textContent=(a>=b?'▲ +':'▼ ')+eur(a-b)+' ('+p.toFixed(1)+'%) in 30 giorni (vendite medie Cardmarket)'}else{chg.className='chg';chg.textContent=''}
+  chart($('mainsvg'),[{pts:ser,color:'#ffcb05',fill:1,w:3}]);
+  const pend=cards.filter(c=>c.status==='pending').length,nf=cards.filter(c=>c.status==='not_found').length;
+  const st=$('strip');st.className='strip'+(sync?.blocked?' warn':'');
+  let t=sync?.lastRun?'Prezzi aggiornati: '+new Date(sync.lastRun).toLocaleString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Prezzi non ancora aggiornati';
+  if(sync?.blocked)t='Cardmarket chiede la verifica "non sono un robot": apri cardmarket.com nel Chrome del Mac e spunta la casella.';
+  else if(pend)t+=` · ${pend} in attesa di prezzo`;
+  if(nf)t+=` · ${nf} non trovate`;
+  $('striptxt').textContent=t;
+  const owners=[...new Set(cards.map(c=>c.owner).filter(Boolean))].sort();
+  const os=$('own'),cur=os.value;os.innerHTML='<option value="">Tutti</option>'+owners.map(o=>`<option>${esc(o)}</option>`).join('');os.value=owners.includes(cur)?cur:'';
+  $('owners').innerHTML=owners.map(o=>`<option value="${esc(o)}">`).join('');
+  renderSet();
+  const inSet=c=>isPk(c)&&setDoc&&Array.isArray(setDoc.items);
+  const q=$('q').value.trim().toLowerCase(),so=$('sort').value;
+  const others=cards.filter(c=>!inSet(c));
+  $('othcount').textContent=others.reduce((s,c)=>s+qty(c),0)+' carte · '+eur(others.reduce((s,c)=>s+val(c),0));
+  let list=others.filter(c=>(!q||(c.name+' '+(c.set||'')+' '+(c.number||'')).toLowerCase().includes(q))&&(!os.value||c.owner===os.value));
+  const ch=c=>chg30(c)??0;
+  list.sort(so==='name'?(a,b)=>a.name.localeCompare(b.name):so==='new'?(a,b)=>(b.addedAt||'').localeCompare(a.addedAt||''):so==='chg'?(a,b)=>ch(b)-ch(a):(a,b)=>val(b)-val(a));
+  $('grid').innerHTML=list.map(c=>{
+    const p=chg30(c);let delta='';
+    if(p!=null)delta=`<span class="chg ${p>=0?'up':'down'}" title="30 giorni">${p>=0?'▲':'▼'} ${Math.abs(p).toFixed(0)}%</span>`;
+    const tag=c.status==='pending'?'<span class="tag">Prezzo in arrivo</span>':c.status==='not_found'?'<span class="tag err">Non trovata</span>':'';
+    return `<button class="slab" data-id="${esc(c.id)}">${qty(c)>1?`<span class="qty">×${qty(c)}</span>`:''}<div class="pic">${imgTag(c)}</div>
+    <div class="nm">${esc(c.name)}</div><div class="st">${esc([c.set,c.number,c.lang].filter(Boolean).join(' · '))}</div>
+    <div class="pr"><span class="v">${eur(c.prices?.trend)}</span>${delta}</div>
+    <div class="pr"><span class="k">PSA 10</span><span>${eur(c.prices?.psa10)}</span></div>${tag}</button>`}).join('')||`<p class="note">${cards.length?'Nessuna carta corrisponde alla ricerca.':'Nessuna carta ancora: premi “+ Carta”.'}</p>`;
+  $('foot').textContent='Valori raw da Cardmarket: tendenza di prezzo × quantità; grafici = prezzo medio di vendita giornaliero di Cardmarket. PSA 10 = media dei venduti PSA 10 su PriceCharting (eBay), convertita in euro a 0,87 €/$; vuoto se non ci sono vendite. Immagini delle carte: Cardmarket.';
+  if(openId)fillDet();
+}
+const openCard=e=>{const b=e.target.closest('[data-id]');if(b){openId=b.dataset.id;$('dconfirm').hidden=true;fillDet();$('ddet').showModal()}};
+$('grid').addEventListener('click',openCard);$('pk').addEventListener('click',openCard);
+function fillDet(){
+  const c=cards.find(x=>x.id===openId);if(!c){$('ddet').close();openId=null;return}
+  $('dname').textContent=c.name;$('dset').textContent=[c.set,c.number,c.lang,c.owner&&('di '+c.owner)].filter(Boolean).join(' · ');
+  $('dpic').innerHTML=imgTag(c);
+  $('dtrend').textContent=eur(c.prices?.trend);$('dmin').textContent=eur(c.prices?.min);$('davg').textContent=eur(c.prices?.avg30);
+  $('dpsa').textContent=c.prices?.psa10!=null?eur(c.prices.psa10)+(c.prices.psa10Usd?' ($'+c.prices.psa10Usd+')':''):'nessuna vendita';
+  const p30=chg30(c);$('d30').textContent=p30==null?'—':(p30>=0?'▲ +':'▼ ')+p30.toFixed(1)+'%';$('d30').className=p30==null?'':'chg '+(p30>=0?'up':'down');
+  $('dqty').textContent=qty(c);
+  $('dstatus').innerHTML=c.status==='pending'?'<span class="tag">Prezzo in arrivo</span>':c.status==='not_found'?'<span class="tag err">Non trovata su Cardmarket</span>':'';
+  const l=$('dlink');if(/^https:\/\/www\.cardmarket\.com\//.test(c.cmUrl||'')){l.href=c.cmUrl;l.hidden=false}else l.hidden=true;
+  $('dupd').textContent=(c.updatedAt?'Prezzi del '+new Date(c.updatedAt).toLocaleString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'')+(c.note?' · '+c.note:'');
+  const sl=salesOf(c).filter(p=>p.d>=daysAgo(60)),tr=(c.hist||[]).map(p=>({d:p.d,v:p.trend??null}));
+  requestAnimationFrame(()=>chart($('dsvg'),[{pts:sl,color:'#cc0000',fill:1,w:2.5},{pts:tr,color:'#3d7dca',w:2}]));
+}
+const alert2=m=>{$('dconfirm').hidden=false;$('dconfirm').textContent=m};
+const upd=async(id,data)=>{try{await db.doc('cards/'+id).update(data)}catch(e){alert2('Non riesco a salvare: '+(e.code||e.message))}};
+$('dclose').onclick=()=>{$('ddet').close();openId=null};
+const _x=()=>{upd(openId,{status:'pending'});alert2('Fatto: il prezzo verrà riletto da Cardmarket al prossimo aggiornamento.')};
+let delArm=0;const _y=async()=>{if(Date.now()-delArm>4000){delArm=Date.now();$('ddel').textContent='Tocca ancora per eliminare';setTimeout(()=>$('ddel').textContent='Elimina',4000);return}
+  const id=openId;$('ddet').close();openId=null;try{await db.doc('cards/'+id).delete()}catch(e){}};
+['q','sort','own'].forEach(i=>$(i).addEventListener('input',render));
+
+
+$('fcancel').onclick=()=>$('dadd').close();
+const shrink=f=>new Promise(res=>{if(!f)return res('');const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,300/im.width,420/im.height),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.68))};im.onerror=()=>res('');im.src=r.result};r.onerror=()=>res('');r.readAsDataURL(f)});
+$('fadd').addEventListener('submit',async e=>{e.preventDefault();if(!db)return;
+  const b=$('fsave');b.disabled=true;b.textContent='Salvo…';
+  const url=$('furl').value.trim();
+  const doc={name:$('fname').value.trim(),number:$('fnum').value.trim(),set:$('fset').value.trim(),lang:$('flang').value,qty:1,owner:$('fown').value.trim(),cmUrl:/^https:\/\/www\.cardmarket\.com\//.test(url)?url:'',img:await shrink($('fphoto').files[0]),status:'pending',prices:{},hist:[],addedAt:new Date().toISOString()};
+  try{await db.collection('cards').add(doc);$('dadd').close()}catch(err){b.textContent=err.code==='invalid_argument'?'Non hai i permessi per aggiungere':'Errore, riprova'}
+  finally{setTimeout(()=>{b.disabled=false;b.textContent='Salva'},1500)}});
+
+const STD='24.10,25.10,26.10,27.10,28.10,29.10,30.10,31.10,01.11,02.11,03.11,04.11,05.11,06.11,07.11,08.11,09.11,10.11,11.11,12.11,13.11,14.11,15.11,16.11,17.11,18.11,19.11,20.11,21.11,22.11';
+const iso=x=>{const [g,m]=x.slice(0,5).split('.');return (x.length>5?'20'+x.slice(5):'2026')+'-'+m+'-'+g};
+const dec=s=>{if(typeof s!=='string'||!s.includes('|'))return [];const [d,v]=s.split('|');const ds=(d==='S'?STD:d).split(','),vs=v.split(',').map(x=>parseInt(x,36)/100);return ds.map((x,i)=>({d:iso(x),v:vs[i]})).filter(p=>isFinite(p.v))};
+const CM='https://www.cardmarket.com/it/Pokemon/Products/Singles/';
+fetch('data.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(d=>{
+  cards=(Array.isArray(d.c)?d.c:[]).map(r=>({id:String(r[0]),name:r[1],set:r[2],number:r[3],lang:r[4],qty:r[5],cmUrl:CM+r[6],img:'https://product-images.s3.cardmarket.com/51/'+r[7],prices:{min:r[8],trend:r[9],avg30:r[10],psa10:r[11],psa10Usd:r[12]},sales:dec(r[13]),status:'ok',note:r[11]!=null?'PSA 10: PriceCharting (venduti eBay), convertito in euro':'PSA 10: nessuna vendita registrata su PriceCharting'}));
+  setDoc=d.set?{title:d.set.t,items:d.set.i.map(x=>({n:x[0],i:x[1],own:!!x[2],trend:x[3],url:CM+'30th-Celebration/Pikachu-30C'+x[0]}))}:null;
+  sync={lastRun:d.u,blocked:!!d.b};render()}).catch(()=>{$('striptxt').textContent='Non riesco a caricare i dati, controlla la connessione.'});
+render();
+}
+</script>
+</body>
+</html>
