@@ -49,7 +49,7 @@ header.hero{background:var(--hero);color:var(--heroink);padding:calc(18px + env(
 .total{font-family:Bungee,sans-serif;font-size:clamp(34px,11vw,64px);overflow:hidden;text-overflow:ellipsis;line-height:1.05;margin-top:12px;white-space:nowrap;color:#ffcb05;text-shadow:3px 3px 0 #3d7dca}
 .sub{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:15px}
 .sub b{font-weight:900}
-.chg{font-weight:900;white-space:nowrap}.chg.up{color:var(--up)}.chg.down{color:var(--down)}
+.chg{font-weight:900;white-space:normal;line-height:1.3}.ctip{position:absolute;pointer-events:none;background:#003a70;color:#fff;border:2px solid #ffcb05;border-radius:10px;padding:6px 9px;font-size:12px;line-height:1.4;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.35);z-index:2}.ctip b{display:block;font-weight:900;color:#ffcb05}.ctip i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}.fig{overflow:visible}.chg.up{color:var(--up)}.chg.down{color:var(--down)}
 .hero .chg.up{color:#5be39a}.hero .chg.down{color:#ff8a80}
 .fig{position:relative;height:190px;margin-top:12px;background:rgba(255,255,255,.08);border:2px solid rgba(255,203,5,.35);border-radius:16px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
 .fig.sm{height:170px;background:var(--bg)}
@@ -76,8 +76,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .pic img{width:100%;height:100%;object-fit:cover;display:block}
 .pic::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.45) 45%,rgba(120,220,255,.25) 52%,transparent 65%);background-size:250% 250%;background-position:100% 0;mix-blend-mode:screen;transition:background-position .6s}
 .slab:hover .pic::after,.slab:focus-visible .pic::after{background-position:0 100%}
-.nm{font-weight:900;font-size:15px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.st{font-size:12px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nm{font-weight:900;font-size:15px;line-height:1.2;overflow-wrap:anywhere}
+.st{font-size:12px;line-height:1.3;color:var(--mut);overflow-wrap:anywhere}
 .pr{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:13px}
 .pr .v{font-family:Bungee,sans-serif;font-size:18px;white-space:nowrap;color:light-dark(#003a70,#ffcb05)}
 .pr .k{color:var(--mut)}
@@ -170,10 +170,10 @@ footer{padding:20px 0 calc(30px + env(safe-area-inset-bottom))}
     <tr><td>Prezzo minimo (Da)</td><td id="dmin"></td></tr>
     <tr><td>Media 30 giorni</td><td id="davg"></td></tr>
     <tr><td>Variazione 30 giorni</td><td id="d30"></td></tr>
-    <tr><td>PSA 10 (venduti, PriceCharting)</td><td id="dpsa"></td></tr>
+    <tr><td>Valore PSA 10</td><td id="dpsa"></td></tr>
     <tr><td>Quantità</td><td id="dqty"></td></tr>
   </tbody></table>
-  <div class="legend"><span><i style="background:var(--red)"></i>Prezzo medio di vendita giornaliero (Cardmarket)</span><span><i style="background:var(--sky)"></i>Tendenza</span></div>
+  <div class="legend"><span><i style="background:var(--red)"></i>Prezzo medio di vendita giornaliero (Cardmarket)</span><span>Tocca o trascina il dito sul grafico per vedere il prezzo di ogni giorno</span></div>
   <div class="fig sm" id="dfig"><svg id="dsvg" role="img" aria-label="Prezzo della carta nel tempo"></svg></div>
   <p class="note" id="dupd"></p>
   <div class="acts"><a id="dlink" target="_blank" rel="noopener"><button type="button">Cardmarket</button></a><button class="pri" id="dclose">Chiudi</button></div>
@@ -190,7 +190,7 @@ const salesOf=c=>{const m=new Map();for(const p of [...(Array.isArray(FH[c.id])?
 const med=a=>{if(!a.length)return 0;const v=a.map(p=>p.v).sort((x,y)=>x-y);return v[Math.floor(v.length/2)]};
 const daysAgo=n=>{const t=new Date(Date.now()-n*864e5);return t.toISOString().slice(0,10)};
 const chg30=c=>{const s=salesOf(c).filter(p=>p.d>=daysAgo(31));return s.length>1&&s[0].v?pct(s[s.length-1].v,s[0].v):null};
-const okImg=u=>/^data:image\//.test(u||'')||/^(thumbs|cm)\/[\w-]+\.jpg$/.test(u||'')||/^https:\/\/product-images\.s3\.cardmarket\.com\/[\w.\/-]+\.jpg$/.test(u||'')||/^https:\/\/assets\.tcgdex\.net\/[\w.\/-]+\.(webp|png|jpg)$/.test(u||'');
+const okImg=u=>/^data:image\//.test(u||'')||/^(thumbs|cm)\/[\w-]+\.jpg$/.test(u||'')||/^https:\/\/product-images\.s3\.cardmarket\.com\/[\w.\/-]+\.jpg$/.test(u||'')||/^img-[\w-]+\.jpg$/.test(u||'')||/^https:\/\/assets\.tcgdex\.net\/[\w.\/-]+\.(webp|png|jpg)$/.test(u||'');
 const qty=c=>Math.max(1,+c.qty||1);
 const last=c=>{const h=c.hist||[];return h.length?h[h.length-1]:null};
 const prev=c=>{const h=c.hist||[];return h.length>1?h[h.length-2]:null};
@@ -222,25 +222,53 @@ function series(){
   return dates.map(d=>{let t=0;for(const [c,s] of S){let v=null;for(const p of s){if(p.d<=d)v=p.v;else break}if(v==null)v=s.length?med(s):(c.prices?.trend??0);t+=v*qty(c)}return{d,v:t}});
 }
 function chart(svg,lines){
+  const box=svg.parentElement;
   const draw=()=>{
     const W=svg.clientWidth,H=svg.clientHeight;if(!W)return;
     const pts=lines.flatMap(l=>l.pts.filter(p=>p.v!=null));
-    const box=svg.parentElement;box.querySelector('.empty-chart')?.remove();
+    box.querySelector('.empty-chart')?.remove();
     const dates=[...new Set(pts.map(p=>p.d))].sort();
-    if(dates.length<2){svg.innerHTML='';const e=document.createElement('div');e.className='empty-chart';e.textContent=dates.length?'Primo prezzo registrato il '+fmtD(dates[0])+'. Il grafico si riempie con un punto al giorno.':'Ancora nessun prezzo registrato.';box.appendChild(e);return}
+    if(dates.length<2){svg.innerHTML='';svg._st=null;const tp=box.querySelector('.ctip');if(tp)tp.hidden=true;const e=document.createElement('div');e.className='empty-chart';e.textContent=dates.length?'Primo prezzo registrato il '+fmtD(dates[0])+'. Il grafico si riempie con un punto al giorno.':'Ancora nessun prezzo registrato.';box.appendChild(e);return}
     const vs=pts.map(p=>p.v);let lo=Math.min(...vs),hi=Math.max(...vs);if(hi-lo<1e-9){hi+=1;lo=Math.max(0,lo-1)}const pad=(hi-lo)*.12;lo=Math.max(0,lo-pad);hi+=pad;
     const L=10,R=W<520?50:60,T=12,B=24;
     const x=d=>L+(W-L-R)*dates.indexOf(d)/(dates.length-1),y=v=>T+(H-T-B)*(1-(v-lo)/(hi-lo));
     let s='';
     for(let i=0;i<=3;i++){const v=lo+(hi-lo)*i/3,yy=y(v);s+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="currentColor" opacity=".15"/><text x="${W-R+6}" y="${yy+4}" font-size="11" fill="currentColor" opacity=".7">${esc(v>=100?Math.round(v)+' €':v.toFixed(v<10?2:1)+' €')}</text>`}
     s+=`<text x="${L}" y="${H-6}" font-size="11" fill="currentColor" opacity=".7">${esc(fmtD(dates[0]))}</text><text x="${W-R}" y="${H-6}" font-size="11" fill="currentColor" opacity=".7" text-anchor="end">${esc(fmtD(dates[dates.length-1]))}</text>`;
-    for(const l of lines){const p=l.pts.filter(p=>p.v!=null&&dates.includes(p.d));if(!p.length)continue;
+    const used=[];
+    for(const l of lines){const p=l.pts.filter(p=>p.v!=null&&dates.includes(p.d));if(!p.length)continue;used.push({l,p});
       const d=p.map((q,i)=>(i?'L':'M')+x(q.d).toFixed(1)+' '+y(q.v).toFixed(1)).join(' ');
       if(l.fill)s+=`<path d="${d} L${x(p[p.length-1].d)} ${H-B} L${x(p[0].d)} ${H-B}Z" fill="${l.color}" opacity=".16"/>`;
-      s+=`<path d="${d}" fill="none" stroke="${l.color}" stroke-width="${l.w||2}" stroke-linejoin="round" stroke-linecap="round"/>`;
-      const e=p[p.length-1];s+=`<circle cx="${x(e.d)}" cy="${y(e.v)}" r="4" fill="${l.color}" stroke="#fff" stroke-width="2"/>`}
-    svg.innerHTML=s};
-  draw();if(!svg._ro){svg._ro=new ResizeObserver(()=>svg._draw&&svg._draw());svg._ro.observe(svg)}svg._draw=draw;
+      s+=`<path d="${d}" fill="none" stroke="${l.color}" stroke-width="${l.w||2}" stroke-linejoin="round" stroke-linecap="round"/>`}
+    s+=`<line class="cx" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3" opacity=".6"/>`;
+    for(const u of used)s+=`<circle class="cd" r="6" fill="${u.l.color}" stroke="#fff" stroke-width="2.5"/>`;
+    svg.innerHTML=s;
+    svg._st={dates,used,x,y,L,R,W,H,T,B};
+    show(svg._sel&&dates.includes(svg._sel)?svg._sel:dates[dates.length-1]);
+  };
+  const show=d=>{
+    const st=svg._st;if(!st)return;svg._sel=d;
+    const cx=st.x(d);const ln=svg.querySelector('.cx');ln.setAttribute('x1',cx);ln.setAttribute('x2',cx);
+    const dots=svg.querySelectorAll('.cd');let rows='',topY=st.H;
+    st.used.forEach((u,i)=>{let v=null;for(const p of u.p){if(p.d<=d)v=p.v;else break}const c=dots[i];
+      if(v==null){c.setAttribute('visibility','hidden');return}
+      const yy=st.y(v);topY=Math.min(topY,yy);c.setAttribute('visibility','visible');c.setAttribute('cx',cx);c.setAttribute('cy',yy);
+      rows+=`<div><i style="background:${u.l.color}"></i>${esc(eur(v))}</div>`});
+    let tp=box.querySelector('.ctip');if(!tp){tp=document.createElement('div');tp.className='ctip';box.appendChild(tp)}
+    tp.hidden=false;tp.innerHTML=`<b>${esc(new Date(d+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'}))}</b>${rows}`;
+    const tw=tp.offsetWidth,th=tp.offsetHeight;
+    let left=cx-tw/2;left=Math.max(4,Math.min(st.W-tw-4,left));
+    let top=topY-th-12;if(top<4)top=Math.min(st.H-st.B-th-4,topY+14);
+    tp.style.left=left+'px';tp.style.top=Math.max(4,top)+'px';
+  };
+  const pick=e=>{const st=svg._st;if(!st)return;const r=svg.getBoundingClientRect();const px=e.clientX-r.left;
+    const f=(px-st.L)/(st.W-st.L-st.R);const i=Math.max(0,Math.min(st.dates.length-1,Math.round(f*(st.dates.length-1))));
+    if(st.dates[i]!==svg._sel)show(st.dates[i])};
+  if(!svg._ev){svg._ev=1;svg.style.touchAction='pan-y';svg.style.cursor='crosshair';
+    svg.addEventListener('pointerdown',e=>{svg._drag=1;pick(e)});
+    svg.addEventListener('pointermove',e=>{if(svg._drag||e.pointerType==='mouse')pick(e)});
+    for(const t of ['pointerup','pointercancel','pointerleave'])svg.addEventListener(t,()=>{svg._drag=0});}
+  svg._sel=null;draw();if(!svg._ro){svg._ro=new ResizeObserver(()=>svg._draw&&svg._draw());svg._ro.observe(svg)}svg._draw=draw;
 }
 
 function renderSet(){
@@ -336,7 +364,7 @@ const iso=x=>{const [g,m]=x.slice(0,5).split('.');return (x.length>5?'20'+x.slic
 const dec=s=>{if(typeof s!=='string'||!s.includes('|'))return [];const [d,v]=s.split('|');const ds=(d==='S'?STD:d).split(','),vs=v.split(',').map(x=>parseInt(x,36)/100);return ds.map((x,i)=>({d:iso(x),v:vs[i]})).filter(p=>isFinite(p.v))};
 const CM='https://www.cardmarket.com/it/Pokemon/Products/Singles/';
 fetch('data.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(d=>{
-  cards=(Array.isArray(d.c)?d.c:[]).map(r=>({id:String(r[0]),name:r[1],set:r[2],number:r[3],lang:r[4],qty:r[5],cmUrl:CM+r[6],img:/^https:/.test(r[7]||'')?r[7]:(r[7]?'https://product-images.s3.cardmarket.com/51/'+r[7]:''),prices:{min:r[8],trend:r[9],avg30:r[10],psa10:r[11],psa10Usd:r[12]},sales:dec(r[13]),status:'ok',note:r[11]!=null?'PSA 10: PriceCharting (venduti eBay), convertito in euro':'PSA 10: nessuna vendita registrata su PriceCharting'}));
+  cards=(Array.isArray(d.c)?d.c:[]).map(r=>({id:String(r[0]),name:r[1],set:r[2],number:r[3],lang:r[4],qty:r[5],cmUrl:CM+r[6],img:/^(https:|img-)/.test(r[7]||'')?r[7]:(r[7]?'https://product-images.s3.cardmarket.com/51/'+r[7]:''),prices:{min:r[8],trend:r[9],avg30:r[10],psa10:r[11],psa10Usd:r[12]},sales:dec(r[13]),status:'ok',note:r[11]!=null?'PSA 10: PriceCharting (venduti eBay), convertito in euro':'PSA 10: nessuna vendita registrata su PriceCharting'}));
   setDoc=d.set?{title:d.set.t,items:d.set.i.map(x=>({n:x[0],i:x[1],own:!!x[2],trend:x[3],url:CM+'30th-Celebration/Pikachu-30C'+x[0]}))}:null;
   sync={lastRun:d.u,blocked:!!d.b};render()}).catch(()=>{$('striptxt').textContent='Non riesco a caricare i dati, controlla la connessione.'});
 render();
