@@ -110,7 +110,6 @@ footer{padding:20px 0 calc(30px + env(safe-area-inset-bottom))}
 @media(max-width:420px){.grid{grid-template-columns:1fr 1fr;gap:10px}.pr .v{font-size:16px}.pk{grid-template-columns:repeat(3,1fr)}}
 @media(prefers-reduced-motion:reduce){#splash .bgimg{animation:none}#splash,.pic::after{transition:none}}
 #splash .bgimg img{width:100%;aspect-ratio:63/88;object-fit:cover;border-radius:8px;opacity:.75}
-.pic:not(:has(img)){background:linear-gradient(135deg,#ffcb05 0 50%,#3d7dca 50%)}
 </style>
 </head>
 <body class="bolts">
@@ -187,10 +186,11 @@ const $=id=>document.getElementById(id);
 const eur=v=>v==null||isNaN(v)?'—':v.toLocaleString('it-IT',{style:'currency',currency:'EUR'});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let cards=[],sync=null,setDoc=null,db=null,openId=null,FH={};
-const salesOf=c=>{const m=new Map();for(const p of [...(Array.isArray(FH[c.id])?FH[c.id]:[]),...(Array.isArray(c.sales)?c.sales:[])])if(p&&typeof p.d==='string'&&isFinite(p.v))m.set(p.d,+p.v);return [...m].sort((a,b)=>a[0]<b[0]?-1:1).map(([d,v])=>({d,v}))};
+const salesOf=c=>{const m=new Map();for(const p of [...(Array.isArray(FH[c.id])?FH[c.id]:[]),...(Array.isArray(c.sales)?c.sales:[])])if(p&&typeof p.d==='string'&&isFinite(p.v))m.set(p.d,+p.v);const arr=[...m].sort((a,b)=>a[0]<b[0]?-1:1).map(([d,v])=>({d,v}));const md=med(arr);return md?arr.filter(p=>p.v<=md*2.5&&p.v>=md/2.5):arr};
+const med=a=>{if(!a.length)return 0;const v=a.map(p=>p.v).sort((x,y)=>x-y);return v[Math.floor(v.length/2)]};
 const daysAgo=n=>{const t=new Date(Date.now()-n*864e5);return t.toISOString().slice(0,10)};
 const chg30=c=>{const s=salesOf(c).filter(p=>p.d>=daysAgo(31));return s.length>1&&s[0].v?pct(s.at(-1).v,s[0].v):null};
-const okImg=u=>/^data:image\//.test(u||'')||/^(thumbs|cm)\/[\w-]+\.jpg$/.test(u||'')||/^https:\/\/product-images\.s3\.cardmarket\.com\/[\w.\/-]+\.jpg$/.test(u||'')||/^https:\/\/assets\.tcgdex\.net\/[\w.\/-]+$/.test(u||'');
+const okImg=u=>/^data:image\//.test(u||'')||/^(thumbs|cm)\/[\w-]+\.jpg$/.test(u||'')||/^https:\/\/product-images\.s3\.cardmarket\.com\/[\w.\/-]+\.jpg$/.test(u||'');
 const qty=c=>Math.max(1,+c.qty||1);
 const last=c=>{const h=c.hist||[];return h.length?h[h.length-1]:null};
 const prev=c=>{const h=c.hist||[];return h.length>1?h[h.length-2]:null};
@@ -219,7 +219,7 @@ function renderSplash(tot){
 function series(){
   const from=daysAgo(31),S=cards.map(c=>[c,salesOf(c)]);
   const dates=[...new Set(S.flatMap(([c,s])=>s.map(p=>p.d)))].filter(d=>d>=from).sort();
-  return dates.map(d=>{let t=0;for(const [c,s] of S){let v=null;for(const p of s){if(p.d<=d)v=p.v;else break}if(v==null)v=s.length?s[0].v:(c.prices?.trend??0);t+=v*qty(c)}return{d,v:t}});
+  return dates.map(d=>{let t=0;for(const [c,s] of S){let v=null;for(const p of s){if(p.d<=d)v=p.v;else break}if(v==null)v=s.length?med(s):(c.prices?.trend??0);t+=v*qty(c)}return{d,v:t}});
 }
 function chart(svg,lines){
   const draw=()=>{
@@ -336,7 +336,7 @@ const iso=x=>{const [g,m]=x.slice(0,5).split('.');return (x.length>5?'20'+x.slic
 const dec=s=>{if(typeof s!=='string'||!s.includes('|'))return [];const [d,v]=s.split('|');const ds=(d==='S'?STD:d).split(','),vs=v.split(',').map(x=>parseInt(x,36)/100);return ds.map((x,i)=>({d:iso(x),v:vs[i]})).filter(p=>isFinite(p.v))};
 const CM='https://www.cardmarket.com/it/Pokemon/Products/Singles/';
 fetch('data.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(d=>{
-  cards=(Array.isArray(d.c)?d.c:[]).map(r=>({id:String(r[0]),name:r[1],set:r[2],number:r[3],lang:r[4],qty:r[5],cmUrl:CM+r[6],img:r[7],prices:{min:r[8],trend:r[9],avg30:r[10],psa10:r[11],psa10Usd:r[12]},sales:dec(r[13]),status:'ok',note:r[11]!=null?'PSA 10: PriceCharting (venduti eBay), convertito in euro':'PSA 10: nessuna vendita registrata su PriceCharting'}));
+  cards=(Array.isArray(d.c)?d.c:[]).map(r=>({id:String(r[0]),name:r[1],set:r[2],number:r[3],lang:r[4],qty:r[5],cmUrl:CM+r[6],img:'https://product-images.s3.cardmarket.com/51/'+r[7],prices:{min:r[8],trend:r[9],avg30:r[10],psa10:r[11],psa10Usd:r[12]},sales:dec(r[13]),status:'ok',note:r[11]!=null?'PSA 10: PriceCharting (venduti eBay), convertito in euro':'PSA 10: nessuna vendita registrata su PriceCharting'}));
   setDoc=d.set?{title:d.set.t,items:d.set.i.map(x=>({n:x[0],i:x[1],own:!!x[2],trend:x[3],url:CM+'30th-Celebration/Pikachu-30C'+x[0]}))}:null;
   sync={lastRun:d.u,blocked:!!d.b};render()}).catch(()=>{$('striptxt').textContent='Non riesco a caricare i dati, controlla la connessione.'});
 render();
