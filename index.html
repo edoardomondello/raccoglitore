@@ -189,8 +189,8 @@ let cards=[],sync=null,setDoc=null,db=null,openId=null,FH={};
 const salesOf=c=>{const m=new Map();for(const p of [...(Array.isArray(FH[c.id])?FH[c.id]:[]),...(Array.isArray(c.sales)?c.sales:[])])if(p&&typeof p.d==='string'&&isFinite(p.v))m.set(p.d,+p.v);const arr=[...m].sort((a,b)=>a[0]<b[0]?-1:1).map(([d,v])=>({d,v}));const md=med(arr);return md?arr.filter(p=>p.v<=md*2.5&&p.v>=md/2.5):arr};
 const med=a=>{if(!a.length)return 0;const v=a.map(p=>p.v).sort((x,y)=>x-y);return v[Math.floor(v.length/2)]};
 const daysAgo=n=>{const t=new Date(Date.now()-n*864e5);return t.toISOString().slice(0,10)};
-const chg30=c=>{const s=salesOf(c).filter(p=>p.d>=daysAgo(31));return s.length>1&&s[0].v?pct(s.at(-1).v,s[0].v):null};
-const okImg=u=>/^data:image\//.test(u||'')||/^(thumbs|cm)\/[\w-]+\.jpg$/.test(u||'')||/^https:\/\/product-images\.s3\.cardmarket\.com\/[\w.\/-]+\.jpg$/.test(u||'');
+const chg30=c=>{const s=salesOf(c).filter(p=>p.d>=daysAgo(31));return s.length>1&&s[0].v?pct(s[s.length-1].v,s[0].v):null};
+const okImg=u=>/^data:image\//.test(u||'')||/^(thumbs|cm)\/[\w-]+\.jpg$/.test(u||'')||/^https:\/\/product-images\.s3\.cardmarket\.com\/[\w.\/-]+\.jpg$/.test(u||'')||/^https:\/\/assets\.tcgdex\.net\/[\w.\/-]+\.(webp|png|jpg)$/.test(u||'');
 const qty=c=>Math.max(1,+c.qty||1);
 const last=c=>{const h=c.hist||[];return h.length?h[h.length-1]:null};
 const prev=c=>{const h=c.hist||[];return h.length>1?h[h.length-2]:null};
@@ -208,7 +208,7 @@ $('go').onclick=hideSplash;
 let fanDone=false;
 function renderSplash(tot){
   $('splv').textContent=eur(tot)+' · '+cards.reduce((s,c)=>s+qty(c),0)+' carte';
-  const bg=document.querySelector('#splash .bgimg');if(bg&&!bg.childElementCount&&cards.length){const all=cards.filter(c=>okImg(c.img));let h='';for(let i=0;i<60;i++){const c=all[(i*7)%all.length];h+=`<img alt="" src="${esc(c.img)}" loading="lazy">`}bg.innerHTML=h}
+  const bg=document.querySelector('#splash .bgimg');if(bg&&!bg.childElementCount&&cards.length){const all=cards.filter(c=>okImg(c.img));if(all.length){let h='';for(let i=0;i<60;i++){const c=all[(i*7)%all.length];h+=`<img alt="" src="${esc(c.img)}" loading="lazy">`}bg.innerHTML=h}}
   return;fanDone=true;
   const top=[...cards].filter(c=>okImg(c.img)).sort((a,b)=>(b.prices?.trend||0)-(a.prices?.trend||0)).slice(0,5);
   const ang=[-26,-13,0,13,26];
@@ -233,12 +233,12 @@ function chart(svg,lines){
     const x=d=>L+(W-L-R)*dates.indexOf(d)/(dates.length-1),y=v=>T+(H-T-B)*(1-(v-lo)/(hi-lo));
     let s='';
     for(let i=0;i<=3;i++){const v=lo+(hi-lo)*i/3,yy=y(v);s+=`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="currentColor" opacity=".15"/><text x="${W-R+6}" y="${yy+4}" font-size="11" fill="currentColor" opacity=".7">${esc(v>=100?Math.round(v)+' €':v.toFixed(v<10?2:1)+' €')}</text>`}
-    s+=`<text x="${L}" y="${H-6}" font-size="11" fill="currentColor" opacity=".7">${esc(fmtD(dates[0]))}</text><text x="${W-R}" y="${H-6}" font-size="11" fill="currentColor" opacity=".7" text-anchor="end">${esc(fmtD(dates.at(-1)))}</text>`;
+    s+=`<text x="${L}" y="${H-6}" font-size="11" fill="currentColor" opacity=".7">${esc(fmtD(dates[0]))}</text><text x="${W-R}" y="${H-6}" font-size="11" fill="currentColor" opacity=".7" text-anchor="end">${esc(fmtD(dates[dates.length-1]))}</text>`;
     for(const l of lines){const p=l.pts.filter(p=>p.v!=null&&dates.includes(p.d));if(!p.length)continue;
       const d=p.map((q,i)=>(i?'L':'M')+x(q.d).toFixed(1)+' '+y(q.v).toFixed(1)).join(' ');
-      if(l.fill)s+=`<path d="${d} L${x(p.at(-1).d)} ${H-B} L${x(p[0].d)} ${H-B}Z" fill="${l.color}" opacity=".16"/>`;
+      if(l.fill)s+=`<path d="${d} L${x(p[p.length-1].d)} ${H-B} L${x(p[0].d)} ${H-B}Z" fill="${l.color}" opacity=".16"/>`;
       s+=`<path d="${d}" fill="none" stroke="${l.color}" stroke-width="${l.w||2}" stroke-linejoin="round" stroke-linecap="round"/>`;
-      const e=p.at(-1);s+=`<circle cx="${x(e.d)}" cy="${y(e.v)}" r="4" fill="${l.color}" stroke="#fff" stroke-width="2"/>`}
+      const e=p[p.length-1];s+=`<circle cx="${x(e.d)}" cy="${y(e.v)}" r="4" fill="${l.color}" stroke="#fff" stroke-width="2"/>`}
     svg.innerHTML=s};
   draw();if(!svg._ro){svg._ro=new ResizeObserver(()=>svg._draw&&svg._draw());svg._ro.observe(svg)}svg._draw=draw;
 }
@@ -266,7 +266,7 @@ function render(){
   const psa=cards.filter(c=>c.prices?.psa10!=null);
   $('tpsa').textContent=psa.length?eur(psa.reduce((s,c)=>s+c.prices.psa10*qty(c),0))+` (${psa.length} carte)`:'nessuna quotazione';
   const ser=series();const chg=$('chg');
-  if(ser.length>1){const a=ser.at(-1).v,b=ser[0].v,p=pct(a,b);chg.className='chg '+(a>=b?'up':'down');chg.textContent=(a>=b?'▲ +':'▼ ')+eur(a-b)+' ('+p.toFixed(1)+'%) in 30 giorni (vendite medie Cardmarket)'}else{chg.className='chg';chg.textContent=''}
+  if(ser.length>1){const a=ser[ser.length-1].v,b=ser[0].v,p=pct(a,b);chg.className='chg '+(a>=b?'up':'down');chg.textContent=(a>=b?'▲ +':'▼ ')+eur(a-b)+' ('+p.toFixed(1)+'%) in 30 giorni (vendite medie Cardmarket)'}else{chg.className='chg';chg.textContent=''}
   chart($('mainsvg'),[{pts:ser,color:'#ffcb05',fill:1,w:3}]);
   const pend=cards.filter(c=>c.status==='pending').length,nf=cards.filter(c=>c.status==='not_found').length;
   const st=$('strip');st.className='strip'+(sync?.blocked?' warn':'');
@@ -336,7 +336,7 @@ const iso=x=>{const [g,m]=x.slice(0,5).split('.');return (x.length>5?'20'+x.slic
 const dec=s=>{if(typeof s!=='string'||!s.includes('|'))return [];const [d,v]=s.split('|');const ds=(d==='S'?STD:d).split(','),vs=v.split(',').map(x=>parseInt(x,36)/100);return ds.map((x,i)=>({d:iso(x),v:vs[i]})).filter(p=>isFinite(p.v))};
 const CM='https://www.cardmarket.com/it/Pokemon/Products/Singles/';
 fetch('data.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(d=>{
-  cards=(Array.isArray(d.c)?d.c:[]).map(r=>({id:String(r[0]),name:r[1],set:r[2],number:r[3],lang:r[4],qty:r[5],cmUrl:CM+r[6],img:'https://product-images.s3.cardmarket.com/51/'+r[7],prices:{min:r[8],trend:r[9],avg30:r[10],psa10:r[11],psa10Usd:r[12]},sales:dec(r[13]),status:'ok',note:r[11]!=null?'PSA 10: PriceCharting (venduti eBay), convertito in euro':'PSA 10: nessuna vendita registrata su PriceCharting'}));
+  cards=(Array.isArray(d.c)?d.c:[]).map(r=>({id:String(r[0]),name:r[1],set:r[2],number:r[3],lang:r[4],qty:r[5],cmUrl:CM+r[6],img:/^https:/.test(r[7]||'')?r[7]:(r[7]?'https://product-images.s3.cardmarket.com/51/'+r[7]:''),prices:{min:r[8],trend:r[9],avg30:r[10],psa10:r[11],psa10Usd:r[12]},sales:dec(r[13]),status:'ok',note:r[11]!=null?'PSA 10: PriceCharting (venduti eBay), convertito in euro':'PSA 10: nessuna vendita registrata su PriceCharting'}));
   setDoc=d.set?{title:d.set.t,items:d.set.i.map(x=>({n:x[0],i:x[1],own:!!x[2],trend:x[3],url:CM+'30th-Celebration/Pikachu-30C'+x[0]}))}:null;
   sync={lastRun:d.u,blocked:!!d.b};render()}).catch(()=>{$('striptxt').textContent='Non riesco a caricare i dati, controlla la connessione.'});
 render();
