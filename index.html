@@ -110,7 +110,7 @@ footer{padding:20px 0 calc(30px + env(safe-area-inset-bottom))}
 @media(max-width:420px){.grid{grid-template-columns:1fr 1fr;gap:10px}.pr .v{font-size:16px}.pk{grid-template-columns:repeat(3,1fr)}}
 @media(prefers-reduced-motion:reduce){#splash .bgimg{animation:none}#splash,.pic::after{transition:none}}
 #splash .bgimg img{width:100%;aspect-ratio:63/88;object-fit:cover;border-radius:8px;opacity:.75}
-</style>
+#splash .bgimg.chz{inset:0;rotate:0deg;display:block;background:#003a70 url(charizard.jpg) center 30%/cover no-repeat}</style>
 </head>
 <body class="bolts">
 <div id="splash">
@@ -190,7 +190,7 @@ const salesOf=c=>{const m=new Map();for(const p of [...(Array.isArray(FH[c.id])?
 const med=a=>{if(!a.length)return 0;const v=a.map(p=>p.v).sort((x,y)=>x-y);return v[Math.floor(v.length/2)]};
 const daysAgo=n=>{const t=new Date(Date.now()-n*864e5);return t.toISOString().slice(0,10)};
 const chg30=c=>{const s=salesOf(c).filter(p=>p.d>=daysAgo(31));return s.length>1&&s[0].v?pct(s[s.length-1].v,s[0].v):null};
-const okImg=u=>/^data:image\//.test(u||'')||/^(thumbs|cm)\/[\w-]+\.jpg$/.test(u||'')||/^https:\/\/product-images\.s3\.cardmarket\.com\/[\w.\/-]+\.jpg$/.test(u||'')||/^img-[\w-]+\.jpg$/.test(u||'')||/^https:\/\/assets\.tcgdex\.net\/[\w.\/-]+\.(webp|png|jpg)$/.test(u||'');
+const okImg=u=>/^data:image\//.test(u||'')||/^(thumbs|cm)\/[\w-]+\.jpg$/.test(u||'')||/^https:\/\/product-images\.s3\.cardmarket\.com\/[\w.\/-]+\.jpg$/.test(u||'')||/^img-[\w-]+\.jpg$/.test(u||'')||/^https:\/\/images\.pokemontcg\.io\/[\w\/]+\.png$/.test(u||'')||/^https:\/\/assets\.tcgdex\.net\/[\w.\/-]+\.(webp|png|jpg)$/.test(u||'');
 const qty=c=>Math.max(1,+c.qty||1);
 const last=c=>{const h=c.hist||[];return h.length?h[h.length-1]:null};
 const prev=c=>{const h=c.hist||[];return h.length>1?h[h.length-2]:null};
@@ -208,7 +208,7 @@ $('go').onclick=hideSplash;
 let fanDone=false;
 function renderSplash(tot){
   $('splv').textContent=eur(tot)+' · '+cards.reduce((s,c)=>s+qty(c),0)+' carte';
-  const bg=document.querySelector('#splash .bgimg');if(bg&&!bg.childElementCount&&cards.length){const all=cards.filter(c=>okImg(c.img));if(all.length){let h='';for(let i=0;i<60;i++){const c=all[(i*7)%all.length];h+=`<img alt="" src="${esc(c.img)}" loading="lazy">`}bg.innerHTML=h}}
+  const bg=document.querySelector('#splash .bgimg');if(bg)bg.classList.add('chz');if(false){const all=cards.filter(c=>okImg(c.img));if(all.length){let h='';for(let i=0;i<60;i++){const c=all[(i*7)%all.length];h+=`<img alt="" src="${esc(c.img)}" loading="lazy">`}bg.innerHTML=h}}
   return;fanDone=true;
   const top=[...cards].filter(c=>okImg(c.img)).sort((a,b)=>(b.prices?.trend||0)-(a.prices?.trend||0)).slice(0,5);
   const ang=[-26,-13,0,13,26];
